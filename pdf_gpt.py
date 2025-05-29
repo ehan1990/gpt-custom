@@ -21,15 +21,19 @@ def check_envs(required_envs):
 
 def main():
     check_envs(REQUIRED_ENVS)
+
+    # read pdf file
     pdf_file = os.environ["PDF_FILE"]
     reader = PdfReader(pdf_file)
 
+    # convert all pages to a string
     raw_text = ''
     for i, page in enumerate(reader.pages):
         text = page.extract_text()
         if text:
             raw_text += text
 
+    # split the string into an array of strings containing max 1000 strings
     text_splitter = CharacterTextSplitter(
         separator="\n",
         chunk_size=1000,
@@ -38,9 +42,11 @@ def main():
     )
     texts = text_splitter.split_text(raw_text)
 
+    # convert strings in a vector (an array of floats) and put them in vectorDB FAISS
     embeddings = OpenAIEmbeddings()
     docsearch = FAISS.from_texts(texts, embeddings)
 
+    # ask chatgpt questions
     chain = load_qa_chain(OpenAI(), chain_type="stuff")
     print(f"Finished reading {pdf_file}. Now you can ask me questions!\n")
     while True:
